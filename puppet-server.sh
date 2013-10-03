@@ -14,7 +14,14 @@ sudo echo "manifest = /etc/puppet/manifests/site.pp" >> /etc/puppet/puppet.conf
 sudo service puppetmaster restart
 
 sudo puppet module install puppetlabs/apt
-sudo puppet module install puppetlabs/openstack
+
+cd /etc/puppet/modules
+git clone git://github.com/stackforge/puppet-openstack.git -b stable/grizzly openstack
+cd openstack
+sudo gem install librarian-puppet
+sudo librarian-puppet install --path ../
+
+#sudo puppet module install puppetlabs/openstack
 
 sudo cat > /etc/puppet/autosign.conf <<EOF
 *.puppet.lab
