@@ -1,5 +1,7 @@
 source /vagrant/common.sh
 
+wget http://apt.puppetlabs.com/puppetlabs-release-precise.deb
+
 sudo apt-get install -y puppet
 sudo service puppet stop
 sudo sed -i 's/START=no/START=yes/g' /etc/default/puppet
@@ -7,6 +9,8 @@ sudo puppet resource service puppet ensure=running enable=true
 
 sudo apt-get install -y puppetmaster
 sudo puppet resource service puppetmaster ensure=running enable=true
+sudo echo "[pod1]" >> /etc/puppet/puppet.conf
+sudo echo "manifest = /etc/puppet/manifests/site.pp" >> /etc/puppet/puppet.conf
 sudo service puppetmaster restart
 
 sudo puppet module install puppetlabs/apt
@@ -21,22 +25,24 @@ sudo cat > /etc/hiera.yaml <<EOF
 :backends:
   - yaml
   - json
-:yaml:
-  :datadir: /etc/puppet/hieradata
-:json:
-  :datadir: /etc/puppet/hieradata
 :hierarchy:
   - "%{::clientcert}"
+  - %{environment}
   - "%{::custom_location}"
   - common
+:yaml:
+   :datadir: /etc/puppet/hieradata
 EOF
+
+sudo ln -s /etc/hiera.yaml /etc/puppet/hiera.yaml
 
 # Dump our OpenStack things into Hiera
 # sudo mkdir -p /etc/puppet/hieradata/
 sudo mkdir -p /var/lib/hiera/
+sudo mkdir -p /etc/puppet/hieradata/
 
-#sudo cat > /etc/puppet/hieradata/common.yaml <<EOF
-sudo cat > /var/lib/hiera/common.yaml <<EOF
+#sudo cat > /var/lib/hiera/pod1.yaml <<EOF
+sudo cat > /etc/puppet/hieradata/pod1.yaml <<EOF
 ---
 # Data needed for Class['openstack::compute']
 
@@ -140,7 +146,7 @@ EOF
 
 # Make a site.pp using the Hiera stuffs
 cat > /etc/puppet/manifests/site.pp <<EOF
-node /puppet-controller.puppet.lab/ {
+node /puppet-controller/ {
     class { 'openstack::repo::uca':
         release => 'grizzly',
     }
