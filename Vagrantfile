@@ -3,7 +3,8 @@
 
 nodes = {
     'puppet-server'   => [1, 100],
-    'puppet-controller'  => [1, 101],
+    'openstack-mysql'	=> [1,10],
+    'puppet-controller'  => [2, 101],
     'puppet-compute' => [3, 200],
 }
 
@@ -18,7 +19,7 @@ Vagrant.configure("2") do |config|
     
 	nodes.each do |prefix, (count, ip_start)|
         	count.times do |i|
-	            if prefix == "puppet-compute"
+	            if prefix == "puppet-compute" || prefix == "puppet-controller"
 	                hostname = "%s-%02d" % [prefix, (i+1)]
 	            else
 	                hostname = "%s" % [prefix, (i+1)]

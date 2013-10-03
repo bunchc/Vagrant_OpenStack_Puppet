@@ -15,12 +15,14 @@ sudo service puppetmaster restart
 
 sudo puppet module install puppetlabs/apt
 
-cd /etc/puppet/modules
-git clone git://github.com/stackforge/puppet-openstack.git -b stable/grizzly openstack
-cd openstack
-sudo gem install librarian-puppet
-sudo librarian-puppet install --path ../
+#cd /etc/puppet/modules
+#git clone git://github.com/stackforge/puppet-openstack.git -b stable/grizzly openstack
+#cd openstack
+#sudo gem install librarian-puppet
+#sudo librarian-puppet install --path ../
 
+sudo puppet module install puppetlabs/apache --version 0.8.1
+sudo puppet module install puppetlabs/openstack --version 2.1.0
 #sudo puppet module install puppetlabs/openstack
 
 sudo cat > /etc/puppet/autosign.conf <<EOF
@@ -186,6 +188,10 @@ node /puppet-controller/ {
     }
 }
 
+node /openstack-mysql/ {
+include openstack::db::mysql
+}
+
 node /puppet-compute/ {
     class { 'openstack::repo::uca':
         release => 'grizzly',
@@ -209,6 +215,111 @@ node /puppet-compute/ {
         cinder_db_password  => hiera('openstack::compute::cinder_db_password'),
         rabbit_password     => hiera('openstack::compute::rabbit_password'),
     }
+}
+EOF
+
+sudo cat > /etc/puppet/manifests/mysql.pp <<EOF
+#databse and rabbitmq classes
+
+$mysql_root_password  => hiera('openstack::controller::mysql_root_password')
+$keystone_db_password => hiera('openstack::controller::keystone_db_password')
+$glance_db_password => hiera('openstack::controller::glance_db_password')
+$nova_db_password     => hiera('openstack::controller::nova_db_password')
+$cinder_db_password => hiera('openstack::controller::cinder_db_password')
+$quantum_db_password => hiera('openstack::controller::quantum_db_password)
+
+class openstack::db::mysql (
+    # Required MySQL
+    # passwords
+    $mysql_root_password,
+    $keystone_db_password,
+    $glance_db_password,
+    $nova_db_password,
+    $cinder_db_password,
+    $quantum_db_password,
+    # MySQL
+    $mysql_bind_address     = '0.0.0.0',
+    $mysql_account_security = true,
+    # Keystone
+    $keystone_db_user       = 'keystone',
+    $keystone_db_dbname     = 'keystone',
+    # Glance
+    $glance_db_user         = 'glance',
+    $glance_db_dbname       = 'glance',
+    # Nova
+    $nova_db_user           = 'nova',
+    $nova_db_dbname         = 'nova',
+    # Cinder
+    $cinder                 = true,
+    $cinder_db_user         = 'cinder',
+    $cinder_db_dbname       = 'cinder',
+    # quantum
+    $quantum                = true,
+    $quantum_db_user        = 'quantum',
+    $quantum_db_dbname      = 'quantum',
+    $allowed_hosts          = false,
+    $enabled                = true
+) {
+
+  # Install and configure MySQL Server
+  class { 'mysql::server':
+    config_hash => {
+      'root_password' => $mysql_root_password,
+      'bind_address'  => $mysql_bind_address,
+    },
+    enabled     => $enabled,
+  }
+
+  # This removes default users and guest access
+  if $mysql_account_security {
+    class { 'mysql::server::account_security': }
+  }
+
+  if ($enabled) {
+    # Create the Keystone db
+    class { 'keystone::db::mysql':
+      user          => $keystone_db_user,
+      password      => $keystone_db_password,
+      dbname        => $keystone_db_dbname,
+      allowed_hosts => $allowed_hosts,
+    }
+
+    # Create the Glance db
+    class { 'glance::db::mysql':
+      user          => $glance_db_user,
+      password      => $glance_db_password,
+      dbname        => $glance_db_dbname,
+      allowed_hosts => $allowed_hosts,
+    }
+
+    # Create the Nova db
+    class { 'nova::db::mysql':
+      user          => $nova_db_user,
+      password      => $nova_db_password,
+      dbname        => $nova_db_dbname,
+      allowed_hosts => $allowed_hosts,
+    }
+
+    # create cinder db
+    if ($cinder) {
+      class { 'cinder::db::mysql':
+        user          => $cinder_db_user,
+        password      => $cinder_db_password,
+        dbname        => $cinder_db_dbname,
+        allowed_hosts => $allowed_hosts,
+      }
+    }
+
+    # create quantum db
+    if ($quantum) {
+      class { 'quantum::db::mysql':
+        user          => $quantum_db_user,
+        password      => $quantum_db_password,
+        dbname        => $quantum_db_dbname,
+        allowed_hosts => $allowed_hosts,
+      }
+    }
+  }
 }
 EOF
 
