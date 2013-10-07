@@ -70,10 +70,10 @@ openstack::compute::libvirt_type:       'qemu'
 openstack::compute::multi_host:         true
 
 # IP or hostname of the controller node
-openstack::compute::db_host:            '192.168.100.101'
-openstack::compute::rabbit_host:        '192.168.100.101'
-openstack::compute::keystone_host:      '192.168.100.101'
-openstack::compute::vncproxy_host:      '192.168.100.101'
+openstack::compute::db_host:            %{db_host}
+openstack::compute::rabbit_host:        %{db_host}
+openstack::compute::keystone_host:      %{db_host}
+openstack::compute::vncproxy_host:      %{db_host}
 openstack::compute::glance_api_servers: '192.168.100.101:9292'
 
 # An IP address range tha Openstack can use for distributing internal DHCP addresses.
@@ -155,6 +155,7 @@ EOF
 
 # Make a site.pp using the Hiera stuffs
 cat > /etc/puppet/manifests/site.pp <<EOF
+$db_host = 192.168.100.10
 node /puppet-controller/ {
     class { 'openstack::repo::uca':
         release => 'grizzly',
