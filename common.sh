@@ -1,11 +1,5 @@
-export DEBIAN_FRONTEND=noninteractive
-echo 'Acquire::http { Proxy "http://'162.209.50.108:3142'"; };' | sudo tee /etc/apt/apt.conf.d/01apt-cacher-ng-proxy
-apt-get update && apt-get install -y vim wget curl git
+sudo rpm -ivh http://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm
+yum update -y
 
-wget http://apt.puppetlabs.com/puppetlabs-release-precise.deb
-sudo dpkg -i puppetlabs-release-precise.deb
-sudo apt-get update
-
-sudo apt-get install -y ruby1.9.1 rubygems
-sudo gem install rmate
-echo "192.168.100.100    puppet puppetmaster.puppet.lab" >> /etc/hosts
+yum install -y ruby1.9.1 rubygems git vim wget screen curl
+echo "192.168.11.100    puppet puppetmaster.puppet.lab" >> /etc/hosts
