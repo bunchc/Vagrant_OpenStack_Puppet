@@ -10,8 +10,8 @@ nodes = {
 }
 
 Vagrant.configure("2") do |config|
-	config.vm.box = "precise64"
-	config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+	config.vm.box = "centos"
+	config.vm.box_url = "http://developer.nrel.gov/downloads/vagrant-boxes/CentOS-6.4-x86_64-v20130731.box" 
 #	config.vm.synced_folder ".", "/vagrant", nfs: true
 	config.vm.provider "vmware_fusion" do |v, override|
 		override.vm.box = "centos_fusion"
