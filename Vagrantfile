@@ -20,7 +20,7 @@ Vagrant.configure("2") do |config|
             config.vm.define "#{hostname}" do |box|
                 box.vm.hostname = "#{hostname}.puppet.lab"
                 box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0" 
-                box.vm.network :private_network
+                #box.vm.network :private_network
                 if prefix == "puppet-server"
                     box.vm.provision :shell, :path => "#{prefix}.sh"
                 else
